@@ -1,14 +1,25 @@
 import pandas as pd
 import random
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+
+# Create FastAPI app
+app = FastAPI()
+
+# --- Add CORS middleware ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080"],  # React dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Existing Request Model ---
 class TweetRequest(BaseModel):
     tweets: List[str]
-
-app = FastAPI()
 
 # --- Your existing sentiment predictor ---
 def predict_sentiment(tweets: List[str]):
@@ -21,22 +32,18 @@ def predict(request: TweetRequest):
     predictions = predict_sentiment(request.tweets)
     return {"predictions": predictions}
 
-# --- NEW endpoint to randomly generate tweets and predict ---
+# --- GET endpoint to randomly generate tweets and predict ---
 @app.get("/sentimentTrigger/")
 def sentiment_trigger():
     """
     Randomly selects one tweet from dataset and returns its sentiment prediction.
     """
-    import pandas as pd
-    import random
-
-    # Load dataset
     df = pd.read_csv("data/aapl_tweets.csv", header=None, names=["label", "tweet"])
     
     # Randomly select 1 tweet
     sampled_tweet = df["tweet"].sample(n=1, random_state=random.randint(0, 1000)).iloc[0]
     
-    # Get prediction (returns a list, take first element)
+    # Get prediction
     prediction = predict_sentiment([sampled_tweet])[0]
     
     return {
