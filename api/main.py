@@ -23,21 +23,23 @@ def predict(request: TweetRequest):
 
 # --- NEW endpoint to randomly generate tweets and predict ---
 @app.get("/sentimentTrigger/")
-def sentiment_trigger(num_samples: int = 5):
+def sentiment_trigger():
     """
-    Randomly selects tweets from dataset and returns sentiment predictions.
+    Randomly selects one tweet from dataset and returns its sentiment prediction.
     """
+    import pandas as pd
+    import random
+
     # Load dataset
     df = pd.read_csv("data/aapl_tweets.csv", header=None, names=["label", "tweet"])
     
-    # Randomly select tweets
-    sampled_tweets = df["tweet"].sample(n=num_samples, random_state=random.randint(0, 1000)).tolist()
+    # Randomly select 1 tweet
+    sampled_tweet = df["tweet"].sample(n=1, random_state=random.randint(0, 1000)).iloc[0]
     
-    # Get predictions
-    predictions = predict_sentiment(sampled_tweets)
+    # Get prediction (returns a list, take first element)
+    prediction = predict_sentiment([sampled_tweet])[0]
     
-    # Return both tweets and predictions
     return {
-        "tweets": sampled_tweets,
-        "predictions": predictions
+        "tweet": sampled_tweet,
+        "prediction": prediction
     }
